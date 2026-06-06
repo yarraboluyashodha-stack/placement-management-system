@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard | Placement Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="sidebar">
+            <h3 class="fw-bold mb-4">PMS Portal</h3>
+            <a href="#" class="sidebar-link active" onclick="showSection('jobs', event)">Available Jobs</a>
+            <a href="#" class="sidebar-link" onclick="showSection('applications', event)">My Applications</a>
+            <a href="#" class="sidebar-link" onclick="showSection('resume', event)">Upload Resume</a>
+            <a href="#" class="sidebar-link" onclick="logout()">Logout</a>
+        </div>
+
+        <div class="main-content">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 id="welcomeText">Welcome, Student</h2>
+                <div class="text-muted" id="userEmail"></div>
+            </div>
+
+            <div id="jobsSection">
+                <h4 class="mb-3">Latest Job Postings</h4>
+                <div id="jobsList" class="row g-4"></div>
+            </div>
+
+            <div id="applicationsSection" style="display: none;">
+                <h4 class="mb-3">My Applications</h4>
+                <div class="table-responsive bg-white p-3 rounded shadow-sm">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Job Title</th>
+                                <th>Company</th>
+                                <th>Applied Date</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="applicationsList"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="resumeSection" style="display: none;">
+                <div class="card p-4">
+                    <h4 class="mb-3">Resume Management</h4>
+                    <p class="text-muted mb-2">Upload your latest resume (PDF, DOC, DOCX, max 5MB).</p>
+                    <p id="currentResumeText" class="mb-3"></p>
+                    <form id="resumeForm">
+                        <input type="file" id="resumeFile" class="form-control mb-3" accept=".pdf,.doc,.docx" required>
+                        <button type="submit" class="btn btn-primary">Upload Resume</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const user = JSON.parse(localStorage.getItem('user'));
+        const token = localStorage.getItem('authToken');
+
+        if (!user || !token || user.role !== 'student') {
+            localStorage.removeItem('user');
+            localStorage.removeItem('authToken');
+            window.location.href = '/pages/login.html';
+        }
+
+        document.getElementById('welcomeText').innerText = `Welcome, ${user.name}`;
+        document.getElementById('userEmail').innerText = user.email;
+
+        const getAuthHeaders = () => ({
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        });
+
+        function showSection(section, event) {
+            if (event) event.preventDefault();
+            document.getElementById('jobsSection').style.display = section === 'jobs' ? 'block' : 'none';
+            document.getElementById('applicationsSection').style.display = section === 'applications' ? 'block' : 'none';
+            document.getElementById('resumeSection').style.display = section === 'resume' ? 'block' : 'none';
+
+            const links = document.querySelectorAll('.sidebar-link');
+            links.forEach(link => link.classList.remove('active'));
+            if (event && event.target) event.target.classList.add('active');
+
+            if (section === 'jobs') loadJobs();
+            if (section === 'applications') loadApplications();
+            if (section === 'resume') loadProfile();
+        }
+
+        async function loadJobs() {
+            try {
+                const response = await fetch('/api/jobs');
+                const jobs = await response.json();
+                const jobsList = document.getElementById('jobsList');
+                jobsList.innerHTML = '';
+
+                jobs.forEach(job => {
+                    jobsList.innerHTML += `
+                        <div class="col-md-6">
+                            <div class="card job-card p-4 h-100">
+                                <div class="d-flex justify-content-between">
+                                    <h5 class="fw-bold mb-1">${job.title}</h5>
+                                    <span class="badge bg-success">${job.salary || 'N/A'}</span>
+                                </div>
+                                <p class="text-primary mb-2">${job.company_name}</p>
+                                <p class="text-muted small mb-2">${job.description || ''}</p>
+                                <p class="small mb-2"><strong>Eligibility:</strong> ${job.eligibility_criteria || 'Not specified'}</p>
+                                <div class="d-flex justify-content-between align-items-center mt-auto">
+                                    <span class="small text-muted">${job.location || 'Location not specified'}</span>
+                                    <button onclick="applyJob(${job.id})" class="btn btn-sm btn-primary px-3">Apply Now</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch (err) {
+                console.error(err);
+                alert('Failed to load jobs.');
+            }
+        }
+
+        async function applyJob(jobId) {
+            if (!confirm('Are you sure you want to apply for this job?')) return;
+
+            try {
+                const response = await fetch('/api/apply', {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({ job_id: jobId })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    alert('Application submitted successfully.');
+                    loadApplications();
+                } else {
+                    alert(data.error || 'Failed to apply.');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('An error occurred while applying.');
+            }
+        }
+
+        async function loadApplications() {
+            try {
+                const response = await fetch('/api/student/applications', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const apps = await response.json();
+                const list = document.getElementById('applicationsList');
+                list.innerHTML = '';
+
+                apps.forEach(app => {
+                    const statusClass = app.status === 'Selected'
+                        ? 'bg-success'
+                        : (app.status === 'Rejected' ? 'bg-danger' : 'bg-warning');
+
+                    list.innerHTML += `
+                        <tr>
+                            <td>${app.job_title}</td>
+                            <td>${app.company_name}</td>
+                            <td>${new Date(app.applied_at).toLocaleDateString()}</td>
+                            <td><span class="badge ${statusClass}">${app.status}</span></td>
+                        </tr>
+                    `;
+                });
+            } catch (err) {
+                console.error(err);
+                alert('Failed to load applications.');
+            }
+        }
+
+        async function loadProfile() {
+            try {
+                const response = await fetch('/api/student/profile', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const profile = await response.json();
+                const currentResumeText = document.getElementById('currentResumeText');
+                if (response.ok && profile.resume_path) {
+                    currentResumeText.innerHTML = `Current resume: <a href="${profile.resume_path}" target="_blank">View Resume</a>`;
+                } else {
+                    currentResumeText.textContent = 'No resume uploaded yet.';
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Failed to load profile.');
+            }
+        }
+
+        document.getElementById('resumeForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const fileInput = document.getElementById('resumeFile');
+            const file = fileInput.files[0];
+            if (!file) {
+                alert('Please select a resume file first.');
+                return;
+            }
+
+            if (file.size > 5 * 1024 * 1024) {
+                alert('File size must be less than 5MB.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = async () => {
+                try {
+                    const response = await fetch('/api/student/resume', {
+                        method: 'POST',
+                        headers: getAuthHeaders(),
+                        body: JSON.stringify({
+                            file_name: file.name,
+                            file_content_base64: reader.result
+                        })
+                    });
+
+                    const data = await response.json();
+                    if (response.ok) {
+                        alert('Resume uploaded successfully.');
+                        loadProfile();
+                        fileInput.value = '';
+                    } else {
+                        alert(data.error || 'Resume upload failed.');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    alert('An error occurred while uploading resume.');
+                }
+            };
+            reader.readAsDataURL(file);
+        });
+
+        async function logout() {
+            try {
+                await fetch('/api/logout', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+            } catch (err) {
+                console.error(err);
+            } finally {
+                localStorage.removeItem('user');
+                localStorage.removeItem('authToken');
+                window.location.href = '/pages/login.html';
+            }
+        }
+
+        loadJobs();
+    </script>
+</body>
+</html>

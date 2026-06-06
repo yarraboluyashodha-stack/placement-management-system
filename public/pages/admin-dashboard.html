@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | Placement Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="sidebar">
+            <h3 class="fw-bold mb-4">Admin Panel</h3>
+            <a href="#" class="sidebar-link active" onclick="showSection('companies', event)">Manage Companies</a>
+            <a href="#" class="sidebar-link" onclick="showSection('jobs', event)">Manage Jobs</a>
+            <a href="#" class="sidebar-link" onclick="showSection('applications', event)">Applications</a>
+            <a href="#" class="sidebar-link" onclick="showSection('students', event)">Students</a>
+            <a href="#" class="sidebar-link" onclick="showSection('reports', event)">Reports</a>
+            <a href="#" class="sidebar-link" onclick="logout()">Logout</a>
+        </div>
+
+        <div class="main-content">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Administrator Dashboard</h2>
+                <div class="text-muted" id="adminEmail"></div>
+            </div>
+
+            <div id="companiesSection">
+                <div class="card p-4 mb-4">
+                    <h4 class="mb-3">Add New Company</h4>
+                    <form id="companyForm">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <input type="text" id="compName" class="form-control" placeholder="Company Name" required>
+                            </div>
+                            <div class="col-md-6">
+                                <input type="text" id="compIndustry" class="form-control" placeholder="Industry">
+                            </div>
+                            <div class="col-md-6">
+                                <input type="url" id="compWebsite" class="form-control" placeholder="Website URL">
+                            </div>
+                            <div class="col-md-6">
+                                <button type="submit" class="btn btn-primary w-100">Add Company</button>
+                            </div>
+                            <div class="col-12">
+                                <textarea id="compDesc" class="form-control" placeholder="Company Description"></textarea>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <h4 class="mb-3">Registered Companies</h4>
+                <div id="companiesList" class="row g-3"></div>
+            </div>
+
+            <div id="jobsSection" style="display: none;">
+                <div class="card p-4 mb-4">
+                    <h4 class="mb-3">Post a New Job</h4>
+                    <form id="jobForm">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <select id="jobCompany" class="form-select" required>
+                                    <option value="">Select Company</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <input type="text" id="jobTitle" class="form-control" placeholder="Job Title" required>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="text" id="jobSalary" class="form-control" placeholder="Salary Package">
+                            </div>
+                            <div class="col-md-4">
+                                <input type="text" id="jobLocation" class="form-control" placeholder="Location">
+                            </div>
+                            <div class="col-md-4">
+                                <input type="date" id="jobDeadline" class="form-control" required>
+                            </div>
+                            <div class="col-12">
+                                <textarea id="jobEligibility" class="form-control" placeholder="Eligibility Criteria (example: CGPA >= 7.0)"></textarea>
+                            </div>
+                            <div class="col-12">
+                                <textarea id="jobDesc" class="form-control" placeholder="Job Description" required></textarea>
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary w-100">Post Job</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <h4 class="mb-3">Posted Jobs</h4>
+                <div class="table-responsive bg-white p-3 rounded shadow-sm">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Title</th>
+                                <th>Company</th>
+                                <th>Location</th>
+                                <th>Deadline</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminJobsList"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="applicationsSection" style="display: none;">
+                <h4 class="mb-3">Student Applications</h4>
+                <div class="table-responsive bg-white p-3 rounded shadow-sm">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Student</th>
+                                <th>Job</th>
+                                <th>Company</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminApplicationsList"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="studentsSection" style="display: none;">
+                <h4 class="mb-3">Manage Student Data</h4>
+                <div class="table-responsive bg-white p-3 rounded shadow-sm">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Course</th>
+                                <th>CGPA</th>
+                                <th>Resume</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentsList"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="reportsSection" style="display: none;">
+                <h4 class="mb-3">Placement Reports & Statistics</h4>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3"><div class="card p-3"><small>Total Students</small><h4 id="rTotalStudents">0</h4></div></div>
+                    <div class="col-md-3"><div class="card p-3"><small>Total Jobs</small><h4 id="rTotalJobs">0</h4></div></div>
+                    <div class="col-md-3"><div class="card p-3"><small>Placed Students</small><h4 id="rPlacedStudents">0</h4></div></div>
+                    <div class="col-md-3"><div class="card p-3"><small>Placement Rate</small><h4 id="rPlacementRate">0%</h4></div></div>
+                </div>
+                <div class="table-responsive bg-white p-3 rounded shadow-sm">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Student</th>
+                                <th>Course</th>
+                                <th>Applications</th>
+                                <th>Latest Status</th>
+                                <th>Placement Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reportStudentsList"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const user = JSON.parse(localStorage.getItem('user'));
+        const token = localStorage.getItem('authToken');
+        let companiesCache = [];
+        let jobsCache = [];
+        let studentsCache = [];
+
+        if (!user || !token || user.role !== 'admin') {
+            localStorage.removeItem('user');
+            localStorage.removeItem('authToken');
+            window.location.href = '/pages/login.html';
+        }
+        document.getElementById('adminEmail').innerText = user.email;
+
+        const authHeaders = (isJson = true) => {
+            const headers = { 'Authorization': `Bearer ${token}` };
+            if (isJson) headers['Content-Type'] = 'application/json';
+            return headers;
+        };
+
+        async function apiFetch(endpoint, options = {}) {
+            const merged = {
+                ...options,
+                headers: {
+                    ...(options.headers || {}),
+                    ...authHeaders(options.body !== undefined)
+                }
+            };
+
+            const response = await fetch(endpoint, merged);
+            let data = {};
+            try {
+                data = await response.json();
+            } catch {
+                data = {};
+            }
+
+            if (response.status === 401 || response.status === 403) {
+                alert('Session expired or access denied. Please login again.');
+                logout();
+                throw new Error('Unauthorized');
+            }
+
+            return { response, data };
+        }
+
+        function showSection(section, event) {
+            if (event) event.preventDefault();
+            document.getElementById('companiesSection').style.display = section === 'companies' ? 'block' : 'none';
+            document.getElementById('jobsSection').style.display = section === 'jobs' ? 'block' : 'none';
+            document.getElementById('applicationsSection').style.display = section === 'applications' ? 'block' : 'none';
+            document.getElementById('studentsSection').style.display = section === 'students' ? 'block' : 'none';
+            document.getElementById('reportsSection').style.display = section === 'reports' ? 'block' : 'none';
+
+            const links = document.querySelectorAll('.sidebar-link');
+            links.forEach(link => link.classList.remove('active'));
+            if (event && event.target) event.target.classList.add('active');
+
+            if (section === 'companies') loadCompanies();
+            if (section === 'jobs') {
+                loadCompaniesForJob();
+                loadAdminJobs();
+            }
+            if (section === 'applications') loadAllApplications();
+            if (section === 'students') loadStudents();
+            if (section === 'reports') loadReports();
+        }
+
+        document.getElementById('companyForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const payload = {
+                name: document.getElementById('compName').value,
+                industry: document.getElementById('compIndustry').value,
+                website: document.getElementById('compWebsite').value,
+                description: document.getElementById('compDesc').value
+            };
+
+            try {
+                const { response, data } = await apiFetch('/api/admin/companies', {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+                if (response.ok) {
+                    alert('Company added successfully.');
+                    event.target.reset();
+                    loadCompanies();
+                } else {
+                    alert(data.error || 'Failed to add company.');
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        });
+
+        async function loadCompanies() {
+            try {
+                const { response, data } = await apiFetch('/api/admin/companies', { method: 'GET' });
+                if (!response.ok) {
+                    alert(data.error || 'Failed to load companies.');
+                    return;
+                }
+
+                companiesCache = data;
+                const list = document.getElementById('companiesList');
+                list.innerHTML = '';
+
+                data.forEach(company => {
+                    list.innerHTML += `
+                        <div class="col-md-4">
+                            <div class="card p-3 h-100">
+                                <h6 class="fw-bold mb-1">${company.name}</h6>
+                                <p class="small text-muted mb-1">${company.industry || '-'}</p>
+                                <p class="small mb-2">${company.website ? `<a href="${company.website}" target="_blank">Website</a>` : ''}</p>
+                                <button class="btn btn-sm btn-outline-primary mt-auto" onclick="editCompany(${company.id})">Edit Company</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function editCompany(companyId) {
+            const company = companiesCache.find(c => c.id === companyId);
+            if (!company) return;
+
+            const name = prompt('Company name:', company.name);
+            if (!name) return;
+            const industry = prompt('Industry:', company.industry || '') ?? company.industry;
+            const website = prompt('Website:', company.website || '') ?? company.website;
+            const description = prompt('Description:', company.description || '') ?? company.description;
+
+            try {
+                const { response, data } = await apiFetch(`/api/admin/companies/${companyId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ name, industry, website, description })
+                });
+                if (response.ok) {
+                    alert('Company updated successfully.');
+                    loadCompanies();
+                    loadCompaniesForJob();
+                } else {
+                    alert(data.error || 'Failed to update company.');
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function loadCompaniesForJob() {
+            if (companiesCache.length === 0) {
+                await loadCompanies();
+            }
+            const select = document.getElementById('jobCompany');
+            select.innerHTML = '<option value="">Select Company</option>';
+            companiesCache.forEach(company => {
+                select.innerHTML += `<option value="${company.id}">${company.name}</option>`;
+            });
+        }
+
+        document.getElementById('jobForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const payload = {
+                company_id: Number(document.getElementById('jobCompany').value),
+                title: document.getElementById('jobTitle').value,
+                salary: document.getElementById('jobSalary').value,
+                location: document.getElementById('jobLocation').value,
+                deadline: document.getElementById('jobDeadline').value,
+                eligibility_criteria: document.getElementById('jobEligibility').value,
+                description: document.getElementById('jobDesc').value
+            };
+
+            try {
+                const { response, data } = await apiFetch('/api/admin/jobs', {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+                if (response.ok) {
+                    alert('Job posted successfully.');
+                    event.target.reset();
+                    loadAdminJobs();
+                } else {
+                    alert(data.error || 'Failed to post job.');
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        });
+
+        async function loadAdminJobs() {
+            try {
+                const { response, data } = await apiFetch('/api/admin/jobs', { method: 'GET' });
+                if (!response.ok) {
+                    alert(data.error || 'Failed to load jobs.');
+                    return;
+                }
+                jobsCache = data;
+                const list = document.getElementById('adminJobsList');
+                list.innerHTML = '';
+
+                data.forEach(job => {
+                    list.innerHTML += `
+                        <tr>
+                            <td>${job.title}</td>
+                            <td>${job.company_name}</td>
+                            <td>${job.location || '-'}</td>
+                            <td>${job.deadline ? new Date(job.deadline).toLocaleDateString() : '-'}</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary me-2" onclick="editJob(${job.id})">Edit</button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteJob(${job.id})">Delete</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function editJob(jobId) {
+            const job = jobsCache.find(j => j.id === jobId);
+            if (!job) return;
+
+            const title = prompt('Job title:', job.title);
+            if (!title) return;
+            const description = prompt('Description:', job.description || '') ?? job.description;
+            const salary = prompt('Salary:', job.salary || '') ?? job.salary;
+            const location = prompt('Location:', job.location || '') ?? job.location;
+            const deadline = prompt('Deadline (YYYY-MM-DD):', job.deadline ? job.deadline.substring(0, 10) : '') ?? job.deadline;
+            const eligibility_criteria = prompt('Eligibility criteria:', job.eligibility_criteria || '') ?? job.eligibility_criteria;
+            const company_id = Number(prompt('Company ID:', job.company_id));
+            if (!company_id) {
+                alert('Valid company ID is required.');
+                return;
+            }
+
+            try {
+                const { response, data } = await apiFetch(`/api/admin/jobs/${jobId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ company_id, title, description, salary, location, deadline, eligibility_criteria })
+                });
+                if (response.ok) {
+                    alert('Job updated successfully.');
+                    loadAdminJobs();
+                } else {
+                    alert(data.error || 'Failed to update job.');
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function deleteJob(jobId) {
+            if (!confirm('Do you want to delete this job posting?')) return;
+            try {
+                const { response, data } = await apiFetch(`/api/admin/jobs/${jobId}`, {
+                    method: 'DELETE'
+                });
+                if (response.ok) {
+                    alert('Job deleted successfully.');
+                    loadAdminJobs();
+                } else {
+                    alert(data.error || 'Failed to delete job.');
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function loadAllApplications() {
+            try {
+                const { response, data } = await apiFetch('/api/admin/applications', { method: 'GET' });
+                if (!response.ok) {
+                    alert(data.error || 'Failed to load applications.');
+                    return;
+                }
+
+                const list = document.getElementById('adminApplicationsList');
+                list.innerHTML = '';
+                data.forEach(app => {
+                    list.innerHTML += `
+                        <tr>
+                            <td>${app.student_name}<br><small class="text-muted">${app.student_email}</small></td>
+                            <td>${app.job_title}</td>
+                            <td>${app.company_name}</td>
+                            <td><span class="badge bg-secondary">${app.status}</span></td>
+                            <td>
+                                <select onchange="updateStatus(${app.id}, this.value)" class="form-select form-select-sm">
+                                    <option value="">Update Status</option>
+                                    <option value="Pending">Pending</option>
+                                    <option value="Shortlisted">Shortlisted</option>
+                                    <option value="Rejected">Rejected</option>
+                                    <option value="Selected">Selected</option>
+                                </select>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function updateStatus(appId, status) {
+            if (!status) return;
+            try {
+                const { response, data } = await apiFetch('/api/admin/applications/status', {
+                    method: 'POST',
+                    body: JSON.stringify({ application_id: appId, status })
+                });
+                if (response.ok) {
+                    alert('Application status updated.');
+                    loadAllApplications();
+                    loadReports();
+                } else {
+                    alert(data.error || 'Failed to update status.');
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function loadStudents() {
+            try {
+                const { response, data } = await apiFetch('/api/admin/students', { method: 'GET' });
+                if (!response.ok) {
+                    alert(data.error || 'Failed to load students.');
+                    return;
+                }
+                studentsCache = data;
+                const list = document.getElementById('studentsList');
+                list.innerHTML = '';
+                data.forEach(student => {
+                    list.innerHTML += `
+                        <tr>
+                            <td>${student.name}</td>
+                            <td>${student.email}</td>
+                            <td>${student.course || '-'}</td>
+                            <td>${student.cgpa || '-'}</td>
+                            <td>${student.resume_path ? `<a href="${student.resume_path}" target="_blank">View</a>` : '-'}</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary me-2" onclick="editStudent(${student.id})">Edit</button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteStudent(${student.id})">Delete</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function editStudent(studentId) {
+            const student = studentsCache.find(s => s.id === studentId);
+            if (!student) return;
+
+            const name = prompt('Student name:', student.name);
+            if (!name) return;
+            const email = prompt('Email:', student.email) ?? student.email;
+            const course = prompt('Course:', student.course || '') ?? student.course;
+            const cgpa = prompt('CGPA:', student.cgpa || '') ?? student.cgpa;
+            const resume_path = prompt('Resume path (optional):', student.resume_path || '') ?? student.resume_path;
+
+            try {
+                const { response, data } = await apiFetch(`/api/admin/students/${studentId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ name, email, course, cgpa: cgpa ? Number(cgpa) : null, resume_path })
+                });
+                if (response.ok) {
+                    alert('Student updated successfully.');
+                    loadStudents();
+                    loadReports();
+                } else {
+                    alert(data.error || 'Failed to update student.');
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function deleteStudent(studentId) {
+            if (!confirm('Do you want to delete this student record?')) return;
+            try {
+                const { response, data } = await apiFetch(`/api/admin/students/${studentId}`, {
+                    method: 'DELETE'
+                });
+                if (response.ok) {
+                    alert('Student deleted successfully.');
+                    loadStudents();
+                    loadAllApplications();
+                    loadReports();
+                } else {
+                    alert(data.error || 'Failed to delete student.');
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function loadReports() {
+            try {
+                const summaryResult = await apiFetch('/api/admin/reports/summary', { method: 'GET' });
+                if (summaryResult.response.ok) {
+                    const s = summaryResult.data;
+                    document.getElementById('rTotalStudents').textContent = s.total_students;
+                    document.getElementById('rTotalJobs').textContent = s.total_jobs;
+                    document.getElementById('rPlacedStudents').textContent = s.placed_students;
+                    document.getElementById('rPlacementRate').textContent = `${s.placement_rate}%`;
+                }
+
+                const studentsResult = await apiFetch('/api/admin/reports/student-status', { method: 'GET' });
+                if (studentsResult.response.ok) {
+                    const list = document.getElementById('reportStudentsList');
+                    list.innerHTML = '';
+                    studentsResult.data.forEach(student => {
+                        const statusClass = student.placement_status === 'Placed'
+                            ? 'text-success'
+                            : (student.placement_status === 'Not Applied' ? 'text-muted' : 'text-warning');
+
+                        list.innerHTML += `
+                            <tr>
+                                <td>${student.name}<br><small class="text-muted">${student.email}</small></td>
+                                <td>${student.course || '-'}</td>
+                                <td>${student.applications_count}</td>
+                                <td>${student.latest_status}</td>
+                                <td class="${statusClass} fw-bold">${student.placement_status}</td>
+                            </tr>
+                        `;
+                    });
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function logout() {
+            try {
+                await fetch('/api/logout', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+            } catch (err) {
+                console.error(err);
+            } finally {
+                localStorage.removeItem('user');
+                localStorage.removeItem('authToken');
+                window.location.href = '/pages/login.html';
+            }
+        }
+
+        loadCompanies();
+    </script>
+</body>
+</html>
